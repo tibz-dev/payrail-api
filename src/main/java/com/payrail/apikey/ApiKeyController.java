@@ -1,10 +1,11 @@
 package com.payrail.apikey;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import com.payrail.apikey.dto.ApiKeyResponse;
 import com.payrail.apikey.dto.ApiKeySummaryResponse;
-import com.payrail.auth.JwtTokenProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,36 +13,31 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/merchant/api-keys")
+@SecurityRequirement(name = "bearerAuth")
 public class ApiKeyController {
 
     private final ApiKeyService apiKeyService;
-    private final JwtTokenProvider jwtTokenProvider;
 
-    public ApiKeyController(ApiKeyService apiKeyService, JwtTokenProvider jwtTokenProvider) {
+    public ApiKeyController(ApiKeyService apiKeyService) {
         this.apiKeyService = apiKeyService;
-        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @PostMapping
-    public ResponseEntity<ApiKeyResponse> create(@RequestHeader("Authorization") String authHeader) {
-        String merchantRef = jwtTokenProvider.getMerchantRef(extractToken(authHeader));
+    public ResponseEntity<ApiKeyResponse> create(Authentication authentication) {
+        String merchantRef = (String) authentication.getPrincipal();
         return ResponseEntity.status(HttpStatus.CREATED).body(apiKeyService.createKey(merchantRef));
     }
 
     @GetMapping
-    public ResponseEntity<List<ApiKeySummaryResponse>> list(@RequestHeader("Authorization") String authHeader) {
-        String merchantRef = jwtTokenProvider.getMerchantRef(extractToken(authHeader));
+    public ResponseEntity<List<ApiKeySummaryResponse>> list(Authentication authentication) {
+        String merchantRef = (String) authentication.getPrincipal();
         return ResponseEntity.ok(apiKeyService.listKeys(merchantRef));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> revoke(@RequestHeader("Authorization") String authHeader, @PathVariable UUID id) {
-        String merchantRef = jwtTokenProvider.getMerchantRef(extractToken(authHeader));
+    public ResponseEntity<Void> revoke(Authentication authentication, @PathVariable UUID id) {
+        String merchantRef = (String) authentication.getPrincipal();
         apiKeyService.revokeKey(merchantRef, id);
         return ResponseEntity.noContent().build();
-    }
-
-    private String extractToken(String authHeader) {
-        return authHeader.replaceFirst("(?i)^Bearer ", "").trim();
     }
 }
