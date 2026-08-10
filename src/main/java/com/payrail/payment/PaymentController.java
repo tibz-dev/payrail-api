@@ -26,11 +26,19 @@ public class PaymentController {
     }
 
     @PostMapping
-    public ResponseEntity<PaymentResponse> create(Authentication authentication,
-                                                  @Valid @RequestBody CreatePaymentRequest request) {
+    public ResponseEntity<PaymentResponse> create(
+            Authentication authentication,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody CreatePaymentRequest request) {
+
         var merchant = resolveMerchant(authentication);
-        Payment payment = paymentService.createPayment(merchant, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(paymentService.toResponse(payment));
+        var result = paymentService.createPayment(merchant, request, idempotencyKey);
+
+        HttpStatus status = result.replayed() ? HttpStatus.OK : HttpStatus.CREATED;
+
+        return ResponseEntity.status(status)
+                .header("Idempotency-Replayed", String.valueOf(result.replayed()))
+                .body(paymentService.toResponse(result.payment()));
     }
 
     @GetMapping("/{id}")
