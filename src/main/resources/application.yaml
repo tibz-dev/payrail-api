@@ -1,10 +1,12 @@
 spring:
   application:
     name: payrail-api
+
   datasource:
-    url: jdbc:postgresql://localhost:5432/payrail
-    username: payrail
-    password: payrail
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/payrail}
+    username: ${DB_USERNAME:payrail}
+    password: ${DB_PASSWORD:payrail}
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -14,9 +16,9 @@ spring:
         format_sql: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 payrail:
   jwt:
-    secret: change-me-local-dev-only-secret-value
-    expiry-minutes: 60
+    secret: ${JWT_SECRET:change-me-local-dev-only-secret-value}
+    expiry-minutes: ${JWT_EXPIRY_MINUTES:60}

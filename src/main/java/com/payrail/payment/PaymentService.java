@@ -7,6 +7,7 @@ import com.payrail.common.id.RequestHasher;
 import com.payrail.merchant.Merchant;
 import com.payrail.payment.dto.CreatePaymentRequest;
 import com.payrail.payment.dto.PaymentResponse;
+import com.payrail.provider.PaymentProvider;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -29,15 +30,27 @@ public class PaymentService {
     private final IdempotencyKeyRepository idempotencyKeyRepository;
     private final PublicIdGenerator idGenerator;
     private final RequestHasher requestHasher;
+    private final PaymentProvider paymentProvider;
+    private final PaymentStateMachine paymentStateMachine;
 
     public PaymentService(PaymentRepository paymentRepository,
                           IdempotencyKeyRepository idempotencyKeyRepository,
                           PublicIdGenerator idGenerator,
-                          RequestHasher requestHasher) {
+                          RequestHasher requestHasher, PaymentProvider paymentProvider, PaymentStateMachine paymentStateMachine) {
         this.paymentRepository = paymentRepository;
         this.idempotencyKeyRepository = idempotencyKeyRepository;
         this.idGenerator = idGenerator;
         this.requestHasher = requestHasher;
+        this.paymentProvider = paymentProvider;
+        this.paymentStateMachine = paymentStateMachine;
+    }
+
+    @Transactional
+    public Payment initiatePayment(Payment payment, String method) {
+        var result = paymentProvider.initiate(payment, method);
+        payment.setProviderDetails(paymentProvider.providerName(), result.providerTransactionId());
+        paymentStateMachine.transition(payment, PaymentStatus.PROCESSING);
+        return payment;
     }
 
     @Transactional
