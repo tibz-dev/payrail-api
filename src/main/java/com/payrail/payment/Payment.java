@@ -52,6 +52,12 @@ public class Payment {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    @Column(name ="provider_name")
+    private String providerName;
+
+    @Column(name = "provider_transaction_id")
+    private String providerTransactionId;
+
     @Version
     private long version;
 
@@ -74,5 +80,10 @@ public class Payment {
     void setStatusInternal(PaymentStatus status) {
         this.status = status;
         this.updatedAt = Instant.now();
+    }
+
+    void setProviderDetails(String providerName, String providerTransactionId) {
+        this.providerName = providerName;
+        this.providerTransactionId = providerTransactionId;
     }
 }
