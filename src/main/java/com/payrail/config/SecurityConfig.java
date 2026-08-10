@@ -37,6 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/merchant/**").hasAuthority("JWT")
                         .requestMatchers("/api/v1/merchant/**", "/api/v1/payments/**").hasAuthority("JWT")
                         .requestMatchers("/internal/mock-provider/**").permitAll()
+                        .requestMatchers("/api/v1/auth/**", "/api/v1/checkout/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
