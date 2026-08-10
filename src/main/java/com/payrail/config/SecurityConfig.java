@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/v1/merchant/**").hasAuthority("JWT")
                         .requestMatchers("/api/v1/merchant/**", "/api/v1/payments/**").hasAuthority("JWT")
+                        .requestMatchers("/internal/mock-provider/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
