@@ -2,6 +2,7 @@ package com.payrail.payment;
 
 import com.payrail.common.error.ApiException;
 import com.payrail.common.error.ErrorCode;
+import com.payrail.ledger.LedgerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +22,11 @@ public class PaymentStateMachine {
     );
 
     private final PaymentEventRepository paymentEventRepository;
+    private final LedgerService ledgerService;
 
-    public PaymentStateMachine(PaymentEventRepository paymentEventRepository) {
+    public PaymentStateMachine(PaymentEventRepository paymentEventRepository, LedgerService ledgerService) {
         this.paymentEventRepository = paymentEventRepository;
+        this.ledgerService = ledgerService;
     }
 
     public void transition(Payment payment, PaymentStatus target) {
@@ -37,6 +40,10 @@ public class PaymentStateMachine {
         payment.setStatusInternal(target);
         paymentEventRepository.save(new PaymentEvent(payment, current, target));
 
-        //TODO: Ledger posting and webhook dispatch hook in here once those modules exist.
+        if (target == PaymentStatus.SUCCESS) {
+            ledgerService.postPaymentSuccess(payment);
+        }
+
+        //TODO: Webhook dispatch hooks in here next step.
     }
 }
